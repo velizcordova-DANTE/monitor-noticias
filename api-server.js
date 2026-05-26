@@ -104,7 +104,6 @@ const TWITTER_ACCOUNTS = [
 
 const TIKTOK_ACCOUNTS = [
   { id: 'tt-unitel', name: 'Unitel Bolivia', user: 'unitelbolivia', url: 'https://tiktok.com/@unitelbolivia' },
-  { id: 'tt-eldeber', name: 'El Deber', user: 'eldeber', url: 'https://tiktok.com/@eldeber' },
   { id: 'tt-erbol', name: 'Erbol', user: 'erbol_noticias', url: 'https://tiktok.com/@erbol_noticias' },
 ];
 
@@ -230,13 +229,13 @@ async function scrapeAll() {
   fs.writeFileSync(DATA_FILE, JSON.stringify(unique, null, 2));
   console.log(`Total: ${unique.length} posts guardados`);
 
-  // Enviar resumen a Telegram si hay posts nuevos
+  // Enviar resumen a Telegram solo si mencionan temas de salud
   const seenUrls = loadSeen();
   const nuevos = unique.filter(p => {
     if (seenUrls.includes(p.url)) return false;
     seenUrls.push(p.url);
     return true;
-  });
+  }).filter(p => SALUD_KEYWORDS.some(kw => p.message.toLowerCase().includes(kw)));
   saveSeen(seenUrls);
   if (nuevos.length > 0) {
     const lineas = nuevos.slice(0, 10).map(p =>
