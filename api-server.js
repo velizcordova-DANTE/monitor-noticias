@@ -235,14 +235,18 @@ async function scrapeAll() {
     return true;
   });
 
-  unique.sort((a, b) => new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime());
+  // Limpiar posts de cuentas que ya no están en la configuración
+  const activeIds = new Set([...TWITTER_ACCOUNTS, ...TIKTOK_ACCOUNTS].map(a => a.id));
+  const clean = unique.filter(p => activeIds.has(p.pageId));
+
+  clean.sort((a, b) => new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime());
   try { fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true }); } catch {}
-  fs.writeFileSync(DATA_FILE, JSON.stringify(unique, null, 2));
-  console.log(`Total: ${unique.length} posts guardados`);
+  fs.writeFileSync(DATA_FILE, JSON.stringify(clean, null, 2));
+  console.log(`Total: ${clean.length} posts guardados (${unique.length - clean.length} eliminados de cuentas inactivas)`);
 
   // Enviar resumen a Telegram solo si mencionan temas de salud
   const seenUrls = loadSeen();
-  const nuevos = unique.filter(p => {
+  const nuevos = clean.filter(p => {
     if (seenUrls.includes(p.url)) return false;
     seenUrls.push(p.url);
     return true;
@@ -343,9 +347,17 @@ const server = http.createServer((req, res) => {
   }
 
   if (req.method === 'GET' && req.url === '/api/test-telegram') {
-    sendTelegramMsg('🧪 *Prueba exitosa* ✅\n\nEl bot de Telegram funciona correctamente.\n\nCada 15 minutos escaneo 18 fuentes de noticias.\nCada 30 minutos escaneo redes sociales (Twitter, TikTok).\n\nSi ves este mensaje, todo está bien.');
+    sendTelegramMsg('🧪 *Prueba exitosa* ✅\n\nEl bot de Telegram funciona correctamente.\n\nCada 15 minutos escaneo 18 fuentes de noticias.\nCada 30 minutos escaneo redes sociales.\n\nSi ves este mensaje, todo está bien.');
     res.writeHead(200, { 'Content-Type': 'text/plain;charset=utf-8' });
     res.end('Mensaje de prueba enviado a Telegram ✅');
+    return;
+  }
+
+  if (req.method === 'GET' && req.url === '/api/clear-cache') {
+    try { if (fs.existsSync(DATA_FILE)) fs.unlinkSync(DATA_FILE); } catch {}
+    try { if (fs.existsSync(SEEN_FILE)) fs.unlinkSync(SEEN_FILE); } catch {}
+    res.writeHead(200, { 'Content-Type': 'text/plain;charset=utf-8' });
+    res.end('🗑️ Caché eliminado. Los datos se regenerarán en el próximo escaneo.');
     return;
   }
 
