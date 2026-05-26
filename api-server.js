@@ -338,8 +338,14 @@ const server = http.createServer((req, res) => {
   if (req.method === 'GET' && req.url === '/api/social-posts') {
     try {
       if (!fs.existsSync(DATA_FILE)) return res.end(JSON.stringify([]));
+      const raw = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
+      const corte = Date.now() - 7 * 24 * 60 * 60 * 1000;
+      const filtrados = Array.isArray(raw) ? raw.filter((p: any) => {
+        const t = new Date(p.postedAt || p.scannedAt || 0).getTime();
+        return !isNaN(t) && t >= corte;
+      }) : [];
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      return res.end(fs.readFileSync(DATA_FILE, 'utf-8'));
+      return res.end(JSON.stringify(filtrados));
     } catch { res.end(JSON.stringify([])); }
     return;
   }

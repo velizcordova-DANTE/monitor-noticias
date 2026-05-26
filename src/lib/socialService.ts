@@ -131,9 +131,14 @@ export async function scanSocialPages(): Promise<SocialPost[]> {
     })(),
   ]);
 
+  const active = new Set(SOCIAL_PAGES.filter(p => p.active).map(p => p.id));
+  const corte = Date.now() - 7 * 24 * 60 * 60 * 1000;
+
   const allPosts = [...(fromApi || []), ...(fromBrowser || [])];
   const seen = new Set<string>();
   return allPosts
+    .filter(p => active.has(p.pageId))
+    .filter(p => { const t = new Date(p.postedAt || p.scannedAt || 0).getTime(); return !isNaN(t) && t >= corte; })
     .filter(p => { const k = `${p.pageId}-${p.message.slice(0, 80)}`; if (seen.has(k)) return false; seen.add(k); return true; })
     .sort((a, b) => new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime());
 }
