@@ -1,0 +1,117 @@
+{
+	"name": "Monitor Redes Sociales",
+	"nodes": [
+		{
+			"parameters": {
+				"rule": {
+					"interval": 60
+				}
+			},
+			"id": "cron-trigger",
+			"name": "Cada 60 min",
+			"type": "n8n-nodes-base.cron",
+			"typeVersion": 1,
+			"position": [250, 300]
+		},
+		{
+			"parameters": {
+				"sendBody": true,
+				"url": "http://localhost:3001/api/social-posts",
+				"options": {}
+			},
+			"id": "post-to-api",
+			"name": "Enviar a la app",
+			"type": "n8n-nodes-base.httpRequest",
+			"typeVersion": 3,
+			"position": [850, 700]
+		},
+		{
+			"parameters": {
+				"url": "https://api.rss2json.com/v1/api.json?rss_url=https://nitter.poast.org/unitelboliviab/rss",
+				"options": {},
+				"sendQuery": true,
+				"queryParameters": {
+					"parameters": []
+				}
+			},
+			"id": "tw-unitel",
+			"name": "Twitter Unitel",
+			"type": "n8n-nodes-base.httpRequest",
+			"typeVersion": 4.2,
+			"position": [450, 60]
+		},
+		{
+			"parameters": {
+				"url": "https://api.rss2json.com/v1/api.json?rss_url=https://nitter.poast.org/ErbolDigital/rss",
+				"options": {}
+			},
+			"id": "tw-erbol",
+			"name": "Twitter Erbol",
+			"type": "n8n-nodes-base.httpRequest",
+			"typeVersion": 4.2,
+			"position": [450, 130]
+		},
+		{
+			"parameters": {
+				"url": "https://api.rss2json.com/v1/api.json?rss_url=https://nitter.poast.org/grupoeldeber/rss",
+				"options": {}
+			},
+			"id": "tw-eldeber",
+			"name": "Twitter El Deber",
+			"type": "n8n-nodes-base.httpRequest",
+			"typeVersion": 4.2,
+			"position": [450, 200]
+		},
+		{
+			"parameters": {
+				"url": "https://api.rss2json.com/v1/api.json?rss_url=https://nitter.poast.org/LosTiemposBol/rss",
+				"options": {}
+			},
+			"id": "tw-lostiempos",
+			"name": "Twitter Los Tiempos",
+			"type": "n8n-nodes-base.httpRequest",
+			"typeVersion": 4.2,
+			"position": [450, 270]
+		},
+		{
+			"parameters": {
+				"url": "https://api.rss2json.com/v1/api.json?rss_url=https://nitter.poast.org/LaRazon_Bolivia/rss",
+				"options": {}
+			},
+			"id": "tw-larazon",
+			"name": "Twitter La Razón",
+			"type": "n8n-nodes-base.httpRequest",
+			"typeVersion": 4.2,
+			"position": [450, 340]
+		},
+		{
+			"parameters": {
+				"jsCode": "const posts = [];\nconst configs = [\n  { pageId: 'tw-unitel', name: 'Unitel Bolivia', url: 'https://twitter.com/unitelboliviab' },\n  { pageId: 'tw-erbol', name: 'Erbol', url: 'https://twitter.com/ErbolDigital' },\n  { pageId: 'tw-eldeber', name: 'El Deber', url: 'https://twitter.com/grupoeldeber' },\n  { pageId: 'tw-lostiempos', name: 'Los Tiempos', url: 'https://twitter.com/LosTiemposBol' },\n  { pageId: 'tw-larazon', name: 'La Razón', url: 'https://twitter.com/LaRazon_Bolivia' },\n];\nconst items = $input.all();\nconst nodeName = $node.name;\nconst cfg = configs.find(c => nodeName.toLowerCase().includes(c.name.toLowerCase().split(' ')[0])) || configs[0];\nconst json = items[0]?.json;\nif (json?.status === 'ok' && json.items) {\n  for (const item of json.items) {\n    const msg = item.title || '';\n    if (!msg) continue;\n    posts.push({ pageId: cfg.pageId, pageName: cfg.name, platform: 'twitter', message: msg.slice(0, 500), url: item.link || cfg.url, imageUrl: '', postedAt: item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString(), scannedAt: new Date().toISOString(), category: 'Social' });\n  }\n}\nreturn posts;"
+			},
+			"id": "transform-all",
+			"name": "Transformar",
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [650, 60]
+		}
+	],
+	"connections": {
+		"Cada 60 min": {
+			"main": [
+				[
+					{ "node": "Twitter Unitel", "type": "main", "index": 0 },
+					{ "node": "Twitter Erbol", "type": "main", "index": 0 },
+					{ "node": "Twitter El Deber", "type": "main", "index": 0 },
+					{ "node": "Twitter Los Tiempos", "type": "main", "index": 0 },
+					{ "node": "Twitter La Razón", "type": "main", "index": 0 }
+				]
+			]
+		},
+		"Twitter Unitel": { "main": [ [ { "node": "Transformar", "type": "main", "index": 0 } ] ] },
+		"Twitter Erbol": { "main": [ [ { "node": "Transformar", "type": "main", "index": 0 } ] ] },
+		"Twitter El Deber": { "main": [ [ { "node": "Transformar", "type": "main", "index": 0 } ] ] },
+		"Twitter Los Tiempos": { "main": [ [ { "node": "Transformar", "type": "main", "index": 0 } ] ] },
+		"Twitter La Razón": { "main": [ [ { "node": "Transformar", "type": "main", "index": 0 } ] ] },
+		"Transformar": { "main": [ [ { "node": "Enviar a la app", "type": "main", "index": 0 } ] ] }
+	}
+}

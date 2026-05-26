@@ -1,0 +1,126 @@
+{
+	"name": "Alertas Salud → WhatsApp",
+	"nodes": [
+		{
+			"id": "cron-trigger",
+			"name": "Cada 30 min",
+			"type": "n8n-nodes-base.cron",
+			"typeVersion": 1,
+			"position": [200, 300],
+			"parameters": {
+				"rule": { "interval": 30 }
+			}
+		},
+		{
+			"id": "rss-eldeber",
+			"name": "El Deber",
+			"type": "n8n-nodes-base.rssFeedRead",
+			"typeVersion": 1.1,
+			"position": [400, 60],
+			"parameters": { "url": "https://eldeber.com.bo/feed" }
+		},
+		{
+			"id": "rss-lostiempos",
+			"name": "Los Tiempos",
+			"type": "n8n-nodes-base.rssFeedRead",
+			"typeVersion": 1.1,
+			"position": [400, 150],
+			"parameters": { "url": "https://www.lostiempos.com/rss.xml" }
+		},
+		{
+			"id": "rss-larazon",
+			"name": "La Razón",
+			"type": "n8n-nodes-base.rssFeedRead",
+			"typeVersion": 1.1,
+			"position": [400, 240],
+			"parameters": { "url": "https://la-razon.com/rss/" }
+		},
+		{
+			"id": "rss-erbol",
+			"name": "Erbol",
+			"type": "n8n-nodes-base.rssFeedRead",
+			"typeVersion": 1.1,
+			"position": [400, 330],
+			"parameters": { "url": "https://erbol.com.bo/rss.xml" }
+		},
+		{
+			"id": "rss-opinion",
+			"name": "Opinión",
+			"type": "n8n-nodes-base.rssFeedRead",
+			"typeVersion": 1.1,
+			"position": [400, 420],
+			"parameters": { "url": "https://opinion.com.bo/rss.xml" }
+		},
+		{
+			"id": "rss-eldiario",
+			"name": "El Diario",
+			"type": "n8n-nodes-base.rssFeedRead",
+			"typeVersion": 1.1,
+			"position": [400, 510],
+			"parameters": { "url": "https://eldiario.com.bo/rss" }
+		},
+		{
+			"id": "merge",
+			"name": "Unir todo",
+			"type": "n8n-nodes-base.merge",
+			"typeVersion": 2,
+			"position": [600, 300],
+			"parameters": {
+				"mode": "combine",
+				"combinationMode": "multiplex"
+			}
+		},
+		{
+			"id": "filter-salud",
+			"name": "Filtrar Salud",
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [800, 300],
+			"parameters": {
+				"jsCode": "const KEYWORDS = ['salud', 'hospital', 'médico', 'medico', 'enfermedad', 'vacuna', 'paciente', 'seguro social', 'caja de salud', 'cns', 'hospitalario', 'cirugía', 'cirugia', 'clínica', 'clinica', 'asuss', 'ministerio de salud', 'donación', 'donacion', 'sangre', 'farmacia', 'medicamento', 'covid', 'influenza', 'enfermedades respiratorias', 'protocolo de atención', 'atención médica', 'atencion medica'];\nconst items = $input.all();\nconst results = [];\nconst seen = $workflow.staticData.seenUrls || [];\n\nfor (const item of items) {\n  const title = (item.json.title || '').toLowerCase();\n  const desc = (item.json.description || '').toLowerCase();\n  const url = item.json.link || '';\n  const content = title + ' ' + desc;\n  \n  if (seen.includes(url)) continue;\n  \n  for (const kw of KEYWORDS) {\n    if (content.includes(kw)) {\n      seen.push(url);\n      if (seen.length > 500) seen.shift();\n      results.push({\n        title: item.json.title,\n        description: (item.json.description || '').replace(/<[^>]*>/g, '').slice(0, 300),\n        url: url,\n        source: item.json.source || item.json.publisher || item.json.feedUrl || '',\n        date: item.json.pubDate || item.json.isoDate || new Date().toISOString(),\n      });\n      break;\n    }\n  }\n}\n\n$workflow.staticData.seenUrls = seen;\nreturn results;"
+			}
+		},
+		{
+			"id": "send-whatsapp",
+			"name": "Enviar WhatsApp",
+			"type": "n8n-nodes-base.httpRequest",
+			"typeVersion": 4.2,
+			"position": [1000, 300],
+			"parameters": {
+				"method": "GET",
+				"url": "https://api.callmebot.com/whatsapp.php",
+				"sendQuery": true,
+				"queryParameters": {
+					"parameters": [
+						{ "name": "phone", "value": "591XXXXXXXX" },
+						{ "name": "apikey", "value": "XXXXXXXXXX" },
+						{ "name": "text", "value": "=ALERTA SALUD\n\n{{ $json['title'] }}\n\nFuente: {{ $json['source'] }}\n\n{{ $json['url'] }}" }
+					]
+				},
+				"options": {}
+			}
+		}
+	],
+	"connections": {
+		"Cada 30 min": {
+			"main": [
+				[
+					{ "node": "El Deber", "type": "main", "index": 0 },
+					{ "node": "Los Tiempos", "type": "main", "index": 0 },
+					{ "node": "La Razón", "type": "main", "index": 0 },
+					{ "node": "Erbol", "type": "main", "index": 0 },
+					{ "node": "Opinión", "type": "main", "index": 0 },
+					{ "node": "El Diario", "type": "main", "index": 0 }
+				]
+			]
+		},
+		"El Deber": { "main": [ [ { "node": "Unir todo", "type": "main", "index": 0 } ] ] },
+		"Los Tiempos": { "main": [ [ { "node": "Unir todo", "type": "main", "index": 0 } ] ] },
+		"La Razón": { "main": [ [ { "node": "Unir todo", "type": "main", "index": 0 } ] ] },
+		"Erbol": { "main": [ [ { "node": "Unir todo", "type": "main", "index": 0 } ] ] },
+		"Opinión": { "main": [ [ { "node": "Unir todo", "type": "main", "index": 0 } ] ] },
+		"El Diario": { "main": [ [ { "node": "Unir todo", "type": "main", "index": 0 } ] ] },
+		"Unir todo": { "main": [ [ { "node": "Filtrar Salud", "type": "main", "index": 0 } ] ] },
+		"Filtrar Salud": { "main": [ [ { "node": "Enviar WhatsApp", "type": "main", "index": 0 } ] ] }
+	}
+}

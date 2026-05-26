@@ -12,6 +12,8 @@ import { ResumenMananaPage } from './pages/ResumenMananaPage';
 import { ResumenTardePage } from './pages/ResumenTardePage';
 import { AnalisisMAEPage } from './pages/AnalisisMAEPage';
 import { OfficialsPage } from './pages/OfficialsPage';
+import { SocialFeed } from './pages/SocialFeed';
+import { SocialReportPage } from './pages/SocialReportPage';
 import { seedInitialData } from './lib/firestore';
 
 export default function App() {
@@ -37,6 +39,8 @@ export default function App() {
             <Route path="/resumen-tarde" element={<ResumenTardePage />} />
             <Route path="/analisis-mae" element={<AnalisisMAEPage />} />
             <Route path="/funcionarios" element={<OfficialsPage />} />
+            <Route path="/redes-sociales" element={<SocialFeed />} />
+            <Route path="/reporte-rrss" element={<SocialReportPage />} />
           </Route>
         </Routes>
       </AuthProvider>

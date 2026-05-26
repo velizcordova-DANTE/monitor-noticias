@@ -1,4 +1,4 @@
-import type { News, Official } from '../types';
+import { formatDateLong, type News, type Official } from '../types';
 
 function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -70,9 +70,7 @@ function newsToHtml(news: News[]): string {
 
 export function generateSummaryHtml(data: SummaryData): string {
   const turnoLabel = getTurnoLabel(data.turno);
-  const dateFormatted = new Date(data.date).toLocaleDateString('es-BO', {
-    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-  });
+  const dateFormatted = formatDateLong(data.date);
 
   const recipientsHtml = data.sentTo && data.sentTo.length > 0
     ? `<p style="font-size:12px;color:#5f6368;"><strong>Destinatarios:</strong> ${data.sentTo.map((o) => `${escapeHtml(o.name)} (${escapeHtml(o.email)})`).join(', ')}</p>`

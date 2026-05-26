@@ -1,4 +1,4 @@
-import type { AnalysisReport } from '../types';
+import { formatDateLong, type AnalysisReport } from '../types';
 
 function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -28,7 +28,7 @@ export function generateAnalysisHtml(report: AnalysisReport): string {
             </td>
             <td style="vertical-align:middle;text-align:right;">
               <h1 style="font-size:16px;letter-spacing:1px;color:#202124;margin:0;">ANÁLISIS INFORMATIVO · MAE</h1>
-              <p style="font-size:11px;color:#9aa0a6;margin:2px 0 0;">${new Date(report.date).toLocaleDateString('es-BO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+              <p style="font-size:11px;color:#9aa0a6;margin:2px 0 0;">${formatDateLong(report.date)}</p>
             </td>
           </tr>
         </table>

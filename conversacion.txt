@@ -1,0 +1,14 @@
+porque no aparece mi proyecto de monittoreo de noticias que ya lo tenia avanzado
+Encontré tu proyecto en C:\proyecto\monitor-noticias\monitor-noticias. Parece que está anidado dentro de otra carpeta con el mismo nombre.
+
+Es un proyecto Vite + TypeScript. ¿Quieres que lo abra o que lo movamos a una ruta más directa?
+
+quiero que lo habras
+El proyecto está completo en C:\proyecto\monitor-noticias\monitor-noticias. Es un monitor de noticias hecho con React + TypeScript + Vite, con:
+
+Autenticación (AuthContext, Login, ProtectedRoute)
+Panel principal (Dashboard)
+Páginas: News, Officials, Análisis MAE, DailySummary, ExpressSummary, ResumenMañana, ResumenTarde
+Servicios: Firebase, Firestore, RSS, generador de análisis, generador de emails HTML
+Voy a iniciarlo:
+

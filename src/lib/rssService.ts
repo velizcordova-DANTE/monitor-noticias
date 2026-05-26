@@ -75,10 +75,13 @@ async function scanSource(feed: FeedSource): Promise<RssArticle[]> {
   const json = await res.json();
   if (json.status !== 'ok') return [];
 
+  const CORTE = Date.now() - 7 * 24 * 60 * 60 * 1000;
+
   return (json.items || []).map((item: any) => {
     const title = item.title || '';
     const summary = stripHtml(item.description || item.content || '');
     const category = detectCategory(title, summary) || feed.defaultCategory;
+    const date = item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString();
     return {
       title,
       summary,
@@ -86,9 +89,9 @@ async function scanSource(feed: FeedSource): Promise<RssArticle[]> {
       imageUrl: extractImage(item),
       source: feed.name,
       category,
-      date: item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString(),
+      date,
     };
-  }).filter((a: RssArticle) => a.title && a.url);
+  }).filter((a: RssArticle) => a.title && a.url && new Date(a.date).getTime() >= CORTE);
 }
 
 function extractImage(item: any): string {
@@ -105,3 +108,4 @@ function stripHtml(html: string): string {
 }
 
 export { FEEDS };
+export { scanSource };

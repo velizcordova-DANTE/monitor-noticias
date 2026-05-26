@@ -8,6 +8,8 @@ const NAV_ITEMS = [
   { to: '/resumen-manana', label: 'Res. Mañana', icon: '🌅' },
   { to: '/resumen-tarde', label: 'Res. Tarde', icon: '🌆' },
   { to: '/analisis-mae', label: 'Análisis MAE', icon: '📈' },
+  { to: '/redes-sociales', label: 'Redes Sociales', icon: '🌐' },
+  { to: '/reporte-rrss', label: 'Reporte RRSS', icon: '📄' },
   { to: '/funcionarios', label: 'Funcionarios', icon: '👥' },
 ];
 

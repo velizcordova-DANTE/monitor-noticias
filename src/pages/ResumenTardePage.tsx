@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { addNews, fetchOfficials, addSummary, getMorningNewsUrls } from '../lib/firestore';
-import { sortNewsHealthFirst, type News, type Official } from '../types';
+import { sortNewsHealthFirst, todayLocal, type News, type Official } from '../types';
 import { scanAllSources, type RssArticle } from '../lib/rssService';
 import { generateSummaryHtml } from '../lib/emailHtmlGenerator';
 
@@ -29,7 +29,6 @@ export function ResumenTardePage() {
   const [selectedArticles, setSelectedArticles] = useState<Set<number>>(new Set());
   const [excludedCount, setExcludedCount] = useState(0);
 
-  const todayLocal = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
   const [form, setForm] = useState({
     date: todayLocal(),
     introduction: 'Estimados compañer@s, adjunto a la presente el monitoreo de noticias de la fecha.\nSaludos Cordiales',
@@ -49,7 +48,7 @@ export function ResumenTardePage() {
     try {
       const morningUrls = await getMorningNewsUrls();
       const results = await scanAllSources();
-      const today = new Date().toISOString().split('T')[0];
+      const today = todayLocal();
       let todayNews = results.filter((a) => a.date?.startsWith(today));
 
       const beforeFilter = todayNews.length > 0 ? todayNews.length : results.length;

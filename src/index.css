@@ -362,6 +362,7 @@ input, textarea {
   height: 180px;
   overflow: hidden;
   background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+  position: relative;
 }
 
 .news-card-img {
@@ -980,6 +981,19 @@ hr { border: none; border-top: 1px solid var(--gray-200); margin: 4px 0; }
 
 .checkbox-item.disabled {
   opacity: 0.5;
+}
+
+/* SOCIAL PLATFORM BADGE */
+.social-platform-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #1877f2;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
 }
 
 /* RESPONSIVE */

@@ -86,6 +86,13 @@ export async function deleteNews(id: string): Promise<void> {
   await deleteDoc(doc(db, 'news', id));
 }
 
+export async function deleteAllNews(): Promise<void> {
+  const q = query(collection(db, 'news'));
+  const snapshot = await getDocs(q);
+  const promises = snapshot.docs.map(d => deleteDoc(doc(db, 'news', d.id)));
+  await Promise.all(promises);
+}
+
 // -- SUMMARIES --
 export async function fetchSummaries(): Promise<Summary[]> {
   const q = query(collection(db, 'summaries'), orderBy('date', 'desc'));

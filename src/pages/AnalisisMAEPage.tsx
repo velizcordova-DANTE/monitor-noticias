@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { fetchNews, fetchAnalyses, addAnalysis, deleteAnalysis, getUserConfig, updateUserConfig } from '../lib/firestore';
 import { Modal } from '../components/Modal';
 import { useAuth } from '../contexts/AuthContext';
-import { sortNewsHealthFirst, type News, type AnalysisItem, type AnalysisReport } from '../types';
+import { sortNewsHealthFirst, todayLocal, formatDate, formatDateLong, type News, type AnalysisItem, type AnalysisReport } from '../types';
 import { generateAutoAnalysis, exportNewsForAI, parseAnalysisFromAI } from '../lib/analysisGenerator';
 import { generateAnalysisHtml } from '../lib/analysisHtmlGenerator';
 
@@ -32,7 +32,6 @@ export function AnalisisMAEPage() {
   const [previewReport, setPreviewReport] = useState<AnalysisReport | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
-  const todayLocal = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
   const [form, setForm] = useState({
     date: todayLocal(),
     introduction: '',
@@ -343,7 +342,7 @@ Cada analysis y projection debe ser extenso (mínimo 3 párrafos cada uno), en e
             <tbody>
               {analyses.map((report) => (
                 <tr key={report.id}>
-                  <td>{new Date(report.date).toLocaleDateString('es-BO')}</td>
+                  <td>{formatDate(report.date)}</td>
                   <td>
                     <button className="btn btn-link" onClick={() => openPreview(report)}>
                       {report.items.length} noticia(s)
@@ -511,7 +510,7 @@ Cada analysis y projection debe ser extenso (mínimo 3 párrafos cada uno), en e
           <div className="analysis-preview">
             <div className="analysis-preview-header">
               <h2>Análisis Informativo para la MAE</h2>
-              <p className="text-muted">{new Date(previewReport.date).toLocaleDateString('es-BO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+              <p className="text-muted">{formatDateLong(previewReport.date)}</p>
             </div>
 
             {previewReport.introduction && (

@@ -1,10 +1,11 @@
 import { useEffect, useState, useRef, type FormEvent } from 'react';
 import { fetchNews, fetchSummaries, addSummary, updateSummary, deleteSummary, fetchOfficials } from '../lib/firestore';
 import { Modal } from '../components/Modal';
-import { sortNewsHealthFirst, type News, type Summary, type Official } from '../types';
+import { sortNewsHealthFirst, todayLocal, formatDate, formatDateLong, type News, type Summary, type Official, type SocialPost } from '../types';
 import type html2canvas from 'html2canvas';
 import type jsPDF from 'jspdf';
 import { generateSummaryHtml } from '../lib/emailHtmlGenerator';
+import { generateSocialHtml } from '../lib/socialHtmlGenerator';
 
 function Toast({ message, type, onClose }: { message: string; type: 'success' | 'error'; onClose: () => void }) {
   useEffect(() => { const t = setTimeout(onClose, 4000); return () => clearTimeout(t); }, [onClose]);
@@ -23,6 +24,7 @@ export function DailySummaryPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewSummary, setPreviewSummary] = useState<{ date: string; news: News[]; notes: string; introduction: string; sentTo: Official[] } | null>(null);
+  const [socialPreviewPosts, setSocialPreviewPosts] = useState<SocialPost[] | null>(null);
   const [editing, setEditing] = useState<Summary | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [form, setForm] = useState({ date: '', introduction: '', notes: '', newsIds: [] as string[], sentTo: [] as string[] });
@@ -50,7 +52,7 @@ export function DailySummaryPage() {
   const openCreate = () => {
     setEditing(null);
     setForm({
-      date: new Date().toISOString().split('T')[0],
+      date: todayLocal(),
       introduction: 'Estimados compañer@s, adjunto a la presente el monitoreo de noticias de la fecha.\nSaludos Cordiales',
       notes: '',
       newsIds: [],
@@ -120,6 +122,11 @@ export function DailySummaryPage() {
     const selectedOfficials = officials.filter((o) => sentToIds.includes(o.id!));
     setPreviewSummary({ date: date || form.date, news: selectedNews, introduction, notes, sentTo: selectedOfficials });
     setPreviewOpen(true);
+  };
+
+  const openSocialPreview = (sm: Summary) => {
+    if (sm.socialPosts) setSocialPreviewPosts(sm.socialPosts);
+    else setSocialPreviewPosts(null);
   };
 
   const toggleNewsId = (id: string) => {
@@ -235,20 +242,30 @@ export function DailySummaryPage() {
               </tr>
             </thead>
             <tbody>
-              {summaries.map((sm) => (
+              {summaries.map((sm) => {
+                const isSocial = sm.type === 'social';
+                return (
                 <tr key={sm.id}>
                   <td>
-                    {new Date(sm.date).toLocaleDateString('es-BO')}
-                    {sm.isExpress && (
+                    {formatDate(sm.date)}
+                    {sm.type === 'social' ? (
+                      <span className="badge" style={{ marginLeft: 6, background: '#e4405f', color: 'white' }}>RRSS</span>
+                    ) : sm.isExpress && (
                       <span className="badge" style={{ marginLeft: 6, background: '#ff9800', color: 'white' }}>
                         {sm.turno === 'manana' ? 'Mañana' : sm.turno === 'tarde' ? 'Tarde' : 'Express'}
                       </span>
                     )}
                   </td>
                   <td>
-                    <button className="btn btn-link" onClick={() => openPreview(sm.newsIds, (sm as any).introduction || '', sm.notes, sm.sentTo, sm.date)}>
-                      {sm.newsIds.length} noticias
-                    </button>
+                    {isSocial ? (
+                      <button className="btn btn-link" onClick={() => openSocialPreview(sm)}>
+                        {sm.socialPosts?.length || 0} publicaciones
+                      </button>
+                    ) : (
+                      <button className="btn btn-link" onClick={() => openPreview(sm.newsIds, (sm as any).introduction || '', sm.notes, sm.sentTo, sm.date)}>
+                        {sm.newsIds.length} noticias
+                      </button>
+                    )}
                   </td>
                   <td className="text-muted">{sm.notes?.slice(0, 60)}{sm.notes?.length > 60 ? '...' : ''}</td>
                   <td>{sm.sentTo?.length || 0} funcionarios</td>
@@ -262,7 +279,11 @@ export function DailySummaryPage() {
                   <td>
                     <div className="actions">
                       <button className="btn btn-sm" onClick={() => openEdit(sm)}>Editar</button>
-                      <button className="btn btn-sm" onClick={() => openPreview(sm.newsIds, (sm as any).introduction || '', sm.notes, sm.sentTo, sm.date)}>Vista previa</button>
+                      {isSocial ? (
+                        <button className="btn btn-sm" onClick={() => openSocialPreview(sm)}>Vista previa</button>
+                      ) : (
+                        <button className="btn btn-sm" onClick={() => openPreview(sm.newsIds, (sm as any).introduction || '', sm.notes, sm.sentTo, sm.date)}>Vista previa</button>
+                      )}
                       {!sm.sentAt && (
                         <button className="btn btn-sm btn-primary" onClick={() => handleSend(sm)}>Enviar</button>
                       )}
@@ -270,7 +291,8 @@ export function DailySummaryPage() {
                     </div>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
               {summaries.length === 0 && (
                 <tr>
                   <td colSpan={6} className="text-center text-muted">No hay resúmenes aún</td>
@@ -376,7 +398,7 @@ export function DailySummaryPage() {
                       Autoridad de Supervisión de la Seguridad Social de Corto Plazo
                     </p>
                     <p className="bulletin-subtitle">
-                      {new Date(previewSummary.date).toLocaleDateString('es-BO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                      {formatDateLong(previewSummary.date)}
                     </p>
                   </div>
                 </div>
@@ -480,6 +502,63 @@ export function DailySummaryPage() {
             </>
           );
         })()}
+      </Modal>
+
+      {/* Social Preview Modal */}
+      <Modal open={socialPreviewPosts !== null} onClose={() => setSocialPreviewPosts(null)} title="Vista previa - Reporte RRSS">
+        {socialPreviewPosts && socialPreviewPosts.length > 0 ? (
+          <div>
+            <div className="news-grid" style={{ maxHeight: 500, overflowY: 'auto' }}>
+              {socialPreviewPosts.map((post, idx) => {
+                const info = (() => {
+                  const map: Record<string, { label: string; color: string; icon: string }> = {
+                    twitter: { label: 'Twitter/X', color: '#000000', icon: '𝕏' },
+                    tiktok: { label: 'TikTok', color: '#fe2c55', icon: '♪' },
+                    instagram: { label: 'Instagram', color: '#e4405f', icon: '📷' },
+                  };
+                  return map[post.platform] || { label: post.platform, color: '#666', icon: '?' };
+                })();
+                return (
+                  <div key={idx} className="news-card">
+                    <div className="news-card-img-wrapper" style={{ height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', background: info.color }}>
+                      <span style={{ color: 'white', fontSize: 18, fontWeight: 700 }}>{info.icon}</span>
+                    </div>
+                    <div className="news-card-body">
+                      <div className="news-card-meta">
+                        <span className="badge" style={{ background: info.color, color: 'white', borderRadius: 4 }}>{info.label}</span>
+                        <span className="source">{post.pageName}</span>
+                      </div>
+                      <p style={{ marginTop: 6, fontSize: 13 }}>{post.message.slice(0, 280)}</p>
+                      <div className="news-card-footer">
+                        <span className="date">{new Date(post.postedAt).toLocaleDateString('es-BO')}</span>
+                        <a href={post.url} target="_blank" rel="noopener noreferrer" className="btn btn-sm">Abrir</a>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ textAlign: 'center', marginTop: 16 }}>
+              <button className="btn btn-sm" style={{ background: '#e8f5e9', borderColor: '#a5d6a7' }} onClick={() => {
+                const html = generateSocialHtml(socialPreviewPosts);
+                const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `reporte-rrss.html`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                fireToast('HTML descargado', 'success');
+              }}>
+                📄 Descargar HTML
+              </button>
+            </div>
+          </div>
+        ) : (
+          <p className="text-muted">No hay publicaciones</p>
+        )}
       </Modal>
     </div>
   );

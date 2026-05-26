@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { addNews, fetchOfficials, addSummary } from '../lib/firestore';
-import { sortNewsHealthFirst, type News, type Official } from '../types';
+import { sortNewsHealthFirst, todayLocal, type News, type Official } from '../types';
 import { scanAllSources, type RssArticle } from '../lib/rssService';
 
 function Toast({ message, type, onClose }: { message: string; type: 'success' | 'error'; onClose: () => void }) {
@@ -29,7 +29,6 @@ export function ExpressSummaryPage() {
   const [selectedArticles, setSelectedArticles] = useState<Set<number>>(new Set());
 
   // Form state
-  const todayLocal = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
   const [form, setForm] = useState({
     date: todayLocal(),
     introduction: 'Estimados compañer@s, adjunto a la presente el monitoreo de noticias de la fecha.\nSaludos Cordiales',
@@ -48,7 +47,7 @@ export function ExpressSummaryPage() {
     setSelectedArticles(new Set());
     try {
       const results = await scanAllSources();
-      const today = new Date().toISOString().split('T')[0];
+      const today = todayLocal();
       const todayNews = results.filter((a) => a.date?.startsWith(today));
       const top = sortNewsHealthFirst(
         (todayNews.length > 0 ? todayNews : results).map((a) => ({

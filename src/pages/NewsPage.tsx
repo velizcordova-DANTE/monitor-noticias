@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { fetchNews, addNews, updateNews, deleteNews } from '../lib/firestore';
+import { fetchNews, addNews, updateNews, deleteNews, deleteAllNews } from '../lib/firestore';
 import { Modal } from '../components/Modal';
 import { CATEGORIES, BOLIVIAN_SOURCES, sortNewsHealthFirst, type News } from '../types';
 import { scanAllSources, FEEDS, type RssArticle } from '../lib/rssService';
@@ -76,6 +76,13 @@ export function NewsPage() {
     }
   };
 
+  const handleDeleteAll = async () => {
+    if (window.confirm('¿Eliminar TODAS las noticias? Esta acción no se puede deshacer.')) {
+      await deleteAllNews();
+      load();
+    }
+  };
+
   // --- Scan ---
   const openScan = () => {
     setScanOpen(true);
@@ -145,6 +152,11 @@ export function NewsPage() {
           <button className="btn btn-primary" onClick={openCreate}>
             + Nueva Noticia
           </button>
+          {filtered.length > 0 && (
+            <button className="btn btn-danger" onClick={handleDeleteAll}>
+              🗑️ Limpiar todas
+            </button>
+          )}
         </div>
       </div>
 
