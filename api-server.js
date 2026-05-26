@@ -180,6 +180,19 @@ async function scrapeTwitter(account) {
     if (items.length === 0) continue;
     return items.map(item => toPost(item, account, 'twitter'));
   }
+  // Fallback: RSSHub (twitter/user/)
+  for (const host of RSSHUBS) {
+    const xml = await fetchWithTimeout(`${host}/twitter/user/${account.user}`);
+    if (!xml) continue;
+    const items = parseItems(xml);
+    if (items.length > 0) return items.map(item => toPost(item, account, 'twitter'));
+  }
+  // Ultimo fallback: rss-bridge.org
+  const xml = await fetchWithTimeout(`https://rss-bridge.org/bridge01/?action=display&bridge=Twitter&context=By+username&u=${account.user}&format=Atom`);
+  if (xml) {
+    const items = parseItems(xml);
+    if (items.length > 0) return items.map(item => toPost(item, account, 'twitter'));
+  }
   return [];
 }
 
