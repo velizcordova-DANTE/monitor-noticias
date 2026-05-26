@@ -298,6 +298,12 @@ async function monitorNews() {
     for (const item of items) {
       const url = item.link;
       if (!url || seen.includes(url)) continue;
+      // Saltar artículos con más de 3 días de antigüedad
+      if (item.pubDate) {
+        const edadMs = Date.now() - new Date(item.pubDate).getTime();
+        const edadHoras = edadMs / (1000 * 60 * 60);
+        if (edadHoras > 72) continue;
+      }
       const content = (item.title + ' ' + item.description).toLowerCase();
       const esSalud = SALUD_KEYWORDS.some(kw => content.includes(kw));
       if (!esSalud) continue;
