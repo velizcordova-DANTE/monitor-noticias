@@ -104,6 +104,7 @@ const TWITTER_ACCOUNTS = [
 
 const TIKTOK_ACCOUNTS = [
   { id: 'tt-unitel', name: 'Unitel Bolivia', user: 'unitelbolivia', url: 'https://tiktok.com/@unitelbolivia' },
+  { id: 'tt-eldeber', name: 'El Deber', user: 'eldeber', url: 'https://tiktok.com/@eldeber' },
   { id: 'tt-erbol', name: 'Erbol', user: 'erbol_noticias', url: 'https://tiktok.com/@erbol_noticias' },
 ];
 
